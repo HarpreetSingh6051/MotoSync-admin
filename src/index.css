@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --dock-height: 84px;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    @apply bg-ink-950 font-sans text-white/90 antialiased;
+    background-image:
+      radial-gradient(900px 600px at 12% -10%, rgba(244, 63, 94, 0.14), transparent 60%),
+      radial-gradient(800px 520px at 92% 4%, rgba(34, 211, 238, 0.1), transparent 58%),
+      radial-gradient(700px 700px at 50% 110%, rgba(139, 92, 246, 0.08), transparent 60%);
+    background-attachment: fixed;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    @apply bg-crimson-500/40 text-white;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.24);
+    background-clip: content-box;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+  }
+
+  input[type='range'] {
+    accent-color: #f43f5e;
+  }
+
+  /* Keep iOS from zooming on focus without disabling user zoom */
+  @supports (-webkit-touch-callout: none) {
+    input,
+    textarea,
+    select {
+      font-size: max(16px, 1em);
+    }
+  }
+}
+
+@layer components {
+  .glass {
+    @apply border border-white/10 bg-white/[0.045] backdrop-blur-2xl;
+  }
+
+  .glass-strong {
+    @apply border border-white/10 bg-ink-900/85 backdrop-blur-2xl;
+  }
+
+  .card {
+    @apply rounded-[26px] border border-white/[0.07] bg-ink-900/70 backdrop-blur-xl;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:border-white/15 hover:bg-ink-850/80;
+  }
+
+  .hairline {
+    @apply border-t border-white/[0.07];
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-medium text-white/70;
+  }
+
+  .label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40;
+  }
+
+  .field {
+    @apply w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-crimson-500/60 focus:bg-white/[0.06] focus:ring-2 focus:ring-crimson-500/15;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 24px rgba(244, 63, 94, 0.55);
+  }
+
+  .dock-offset {
+    padding-bottom: calc(var(--dock-height) + env(safe-area-inset-bottom, 0px) + 28px);
+  }
+
+  .mask-fade-x {
+    mask-image: linear-gradient(90deg, transparent, black 12px, black calc(100% - 12px), transparent);
+  }
+
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.16;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+}
+
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .drag-none {
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+}
+
+/* Kixup Golden Helmet micro-motion */
+@keyframes helmet-shimmer {
+  0% {
+    transform: translateX(-7px);
+    opacity: 0;
+  }
+  22% {
+    opacity: 0.7;
+  }
+  60% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateX(9px);
+    opacity: 0;
+  }
+}
+
+@keyframes helmet-rev {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  22% {
+    transform: scale(1.14) rotate(-4deg);
+  }
+  55% {
+    transform: scale(1.06) rotate(3deg);
+  }
+  78% {
+    transform: scale(1.1) rotate(-1deg);
+  }
+}
+
+.helmet-shimmer {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: helmet-shimmer 2.8s ease-in-out infinite;
+}
+
+.helmet-rev {
+  display: inline-flex;
+  animation: helmet-rev 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .helmet-shimmer,
+  .helmet-rev {
+    animation: none !important;
+  }
+}
