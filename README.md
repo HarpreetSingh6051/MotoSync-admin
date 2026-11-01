@@ -1,6 +1,6 @@
-# Kixup Admin ERP
+# MotoSync Admin ERP
 
-Standalone Super Admin ERP/CRM dashboard for the Kixup platform, built with React, Vite, TypeScript, and Tailwind CSS.
+Standalone Super Admin ERP/CRM dashboard for the MotoSync platform, built with React, Vite, TypeScript, and Tailwind CSS.
 
 ## Features
 - **Overview & Revenue**: Real-time KPI metrics (total riders, PRO subscribers, estimated MRR in INR, active sponsored campaigns).

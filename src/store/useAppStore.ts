@@ -103,7 +103,7 @@ export const useAppStore = create<AppState>()(
           planBadge: value ? 'golden_helmet' : 'none',
         })
         get().pushToast(
-          value ? 'Kixup PRO unlocked' : 'PRO switched off',
+          value ? 'MotoSync PRO unlocked' : 'PRO switched off',
           value
             ? '4K reels, offline GPX, family tracking and pack-spread alerts are live.'
             : 'You are back on the free rider tier.',
@@ -114,7 +114,7 @@ export const useAppStore = create<AppState>()(
         set({ planId, planBadge, isPro })
         if (silent) return
         get().pushToast(
-          isPro ? 'Kixup PRO unlocked' : 'Plan updated',
+          isPro ? 'MotoSync PRO unlocked' : 'Plan updated',
           isPro
             ? 'Your Golden Helmet is live on this device.'
             : 'You are on the free rider tier.',

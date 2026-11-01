@@ -28,7 +28,7 @@ export const defaultPlans: SubscriptionPlan[] = [
       'Join public rides and club lounges',
       'Pack chat, pings and live radar preview',
       '2 AI receipt scans every month',
-      '1080p reels with the Kixup watermark',
+      '1080p reels with the MotoSync watermark',
     ],
     limits: {
       aiScansPerMonth: 2,
@@ -331,7 +331,7 @@ export const defaultCampaigns: SponsoredCampaign[] = [
     id: 'camp_revzilla',
     sponsorName: 'RevZilla',
     title: '10% off touring tyres',
-    perkOffer: 'Global pack perk: 10% off Michelin Road 6 and Metzeler Tourance with code KIXUP10.',
+    perkOffer: 'Global pack perk: 10% off Michelin Road 6 and Metzeler Tourance with code MOTOSYNC10.',
     region: 'Global',
     cpmRateUsd: 6.8,
     impressions: 12_760,

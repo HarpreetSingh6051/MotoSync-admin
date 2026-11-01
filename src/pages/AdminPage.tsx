@@ -122,7 +122,7 @@ export const AdminPage = () => {
           <button type="button" onClick={() => navigate('/feed')} className="flex items-center gap-2.5">
             <Logo compact />
             <div className="hidden sm:block">
-              <p className="font-display text-sm font-black tracking-[0.08em] text-white">KIXUP</p>
+              <p className="font-display text-sm font-black tracking-[0.08em] text-white">MOTOSYNC</p>
               <p className="text-[8px] uppercase tracking-[0.2em] text-white/35">Super Admin ERP</p>
             </div>
           </button>

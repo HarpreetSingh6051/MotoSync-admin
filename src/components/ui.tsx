@@ -611,41 +611,46 @@ export const Logo = ({ compact = false }: { compact?: boolean }) => {
   const gradientId = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   return (
     <div className="flex items-center gap-2.5">
-      <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-[13px] border border-amber-300/20 bg-ink-800">
+      <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-[13px] border border-amber-300/25 bg-ink-900 shadow-[0_0_15px_rgba(251,191,36,0.12)]">
         <svg viewBox="0 0 64 64" className="h-6 w-6">
           <defs>
             <linearGradient id={`logo-${gradientId}`} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="#FBBF24" />
-              <stop offset="55%" stopColor="#F43F5E" />
+              <stop offset="50%" stopColor="#F43F5E" />
               <stop offset="100%" stopColor="#22D3EE" />
             </linearGradient>
           </defs>
+          {/* Aerodynamic athletic 'M' telemetry mark */}
           <path
-            d="M17 13v38M17 32l20-19M17 32l23 19"
+            d="M13 49V17l19 22 19-22v32"
             fill="none"
             stroke={`url(#logo-${gradientId})`}
-            strokeWidth="6"
+            strokeWidth="5.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
+          {/* Telemetry pulse wave bridge */}
           <path
-            d="M36 20h11c4.4 0 8 3.6 8 8v8c0 4.4-3.6 8-8 8H36"
+            d="M20 37l12-14 12 14"
             fill="none"
-            stroke="#F4F4F8"
-            strokeWidth="3.6"
+            stroke="#FFFFFF"
+            strokeWidth="2.5"
             strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.9"
           />
-          <path d="M36 32h16" stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+          {/* Pack sync radar ping */}
+          <circle cx="32" cy="23" r="2.5" fill="#FBBF24" />
         </svg>
-        <span className="absolute inset-0 bg-gradient-to-br from-amber-400/15 via-crimson-500/10 to-cyber-400/10" />
+        <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-400/15 via-crimson-500/10 to-cyber-400/10" />
       </div>
       {!compact ? (
         <div className="leading-none">
           <p className="font-display text-[17px] font-black tracking-[0.08em] text-white">
-            KIX<span className="text-amber-300">UP</span>
+            MOTO<span className="text-amber-300">SYNC</span>
           </p>
-          <p className="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.2em] text-white/35">
-            Kickstands up · Pack connected
+          <p className="mt-0.5 text-[7.5px] font-semibold uppercase tracking-[0.22em] text-white/40">
+            Pack Connected · Ride in Sync
           </p>
         </div>
       ) : null}

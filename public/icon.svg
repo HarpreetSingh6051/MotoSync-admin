@@ -1,19 +1,54 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0B0B13"/>
-      <stop offset="1" stop-color="#07070C"/>
+      <stop offset="0%" stop-color="#0E0E18"/>
+      <stop offset="100%" stop-color="#06060A"/>
     </linearGradient>
-    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#F43F5E"/>
-      <stop offset="1" stop-color="#22D3EE"/>
+    <linearGradient id="m-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="45%" stop-color="#F43F5E"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
     </linearGradient>
+    <linearGradient id="sync-wave" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.2"/>
+      <stop offset="50%" stop-color="#FBBF24" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#F43F5E" stop-opacity="0.2"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <path d="M88 300h336" stroke="url(#neon)" stroke-width="10" stroke-linecap="round" opacity="0.35"/>
-  <circle cx="168" cy="300" r="58" fill="none" stroke="url(#neon)" stroke-width="16"/>
-  <circle cx="354" cy="300" r="58" fill="none" stroke="url(#neon)" stroke-width="16"/>
-  <path d="M168 300l58-96h74l54 96" fill="none" stroke="#F4F4F8" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M226 204h74" stroke="#F4F4F8" stroke-width="16" stroke-linecap="round"/>
-  <path d="M96 136h44l22 44 22-44h44" fill="none" stroke="#F43F5E" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Background Container -->
+  <rect width="512" height="512" rx="118" fill="url(#bg)"/>
+  <rect width="510" height="510" x="1" y="1" rx="117" fill="none" stroke="url(#m-grad)" stroke-width="3" stroke-opacity="0.35"/>
+
+  <!-- Radar Telemetry Rings -->
+  <circle cx="256" cy="240" r="180" fill="none" stroke="#22D3EE" stroke-width="2" stroke-opacity="0.12" stroke-dasharray="8 12"/>
+  <circle cx="256" cy="240" r="130" fill="none" stroke="#FBBF24" stroke-width="2" stroke-opacity="0.16"/>
+
+  <!-- Speed Pulse Horizontal Horizon -->
+  <line x1="64" y1="360" x2="448" y2="360" stroke="url(#sync-wave)" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- MotoSync 'M' Telemetry Monogram -->
+  <path d="M128 360 V160 L256 308 L384 160 V360" 
+        fill="none" 
+        stroke="url(#m-grad)" 
+        stroke-width="38" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+        filter="url(#glow)"/>
+
+  <!-- Center Pulse Sync Bridge -->
+  <path d="M178 284 L256 196 L334 284" 
+        fill="none" 
+        stroke="#FFFFFF" 
+        stroke-width="16" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+        opacity="0.95"/>
+
+  <!-- Lead Captain Radar Ping -->
+  <circle cx="256" cy="196" r="14" fill="#FBBF24"/>
+  <circle cx="256" cy="196" r="24" fill="none" stroke="#FBBF24" stroke-width="3" stroke-opacity="0.5"/>
 </svg>
