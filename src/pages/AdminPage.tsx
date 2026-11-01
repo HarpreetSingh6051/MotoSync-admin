@@ -341,7 +341,7 @@ export const AdminPage = () => {
   return (
     <div
       className={cx(
-        'flex min-h-screen antialiased transition-colors duration-200 selection:bg-amber-400 selection:text-black',
+        'flex h-screen h-[100dvh] w-full overflow-hidden antialiased transition-colors duration-200 selection:bg-amber-400 selection:text-black',
         isLight ? 'bg-[#F8FAFC] text-slate-800' : 'bg-[#07090E] text-slate-100',
       )}
     >
@@ -350,13 +350,13 @@ export const AdminPage = () => {
       {/* ------------------------------------------------------------- */}
       <aside
         className={cx(
-          'fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r transition-transform duration-300 lg:static lg:translate-x-0',
-          isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-white/[0.08] bg-[#0B0F19]/95 backdrop-blur-2xl',
+          'fixed inset-y-0 left-0 z-40 flex h-full w-72 shrink-0 flex-col border-r transition-transform duration-300 lg:relative lg:translate-x-0',
+          isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-white/[0.08] bg-[#0B0F19] backdrop-blur-2xl',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         {/* Brand Header */}
-        <div className={cx('flex h-16 items-center justify-between border-b px-5', isLight ? 'border-slate-200' : 'border-white/[0.08]')}>
+        <div className={cx('flex h-16 shrink-0 items-center justify-between border-b px-5', isLight ? 'border-slate-200' : 'border-white/[0.08]')}>
           <div className="flex items-center gap-3">
             <Logo compact />
             <div>
@@ -377,7 +377,7 @@ export const AdminPage = () => {
         </div>
 
         {/* Navigation Modules & Submodules */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin">
+        <div className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin">
           {navGroups.map((group) => (
             <div key={group.group} className="space-y-1">
               <p className={cx('px-3 text-[9px] font-bold tracking-[0.25em] uppercase', isLight ? 'text-slate-400' : 'text-white/30')}>{group.group}</p>
@@ -433,7 +433,7 @@ export const AdminPage = () => {
         </div>
 
         {/* Sidebar Footer */}
-        <div className={cx('border-t p-3 space-y-2', isLight ? 'border-slate-200 bg-slate-50' : 'border-white/[0.08] bg-[#090D15]')}>
+        <div className={cx('shrink-0 border-t p-3 space-y-2', isLight ? 'border-slate-200 bg-slate-50' : 'border-white/[0.08] bg-[#090D15]')}>
           <div className={cx('flex items-center justify-between rounded-xl border p-2.5', isLight ? 'border-slate-200 bg-white' : 'border-white/[0.08] bg-white/[0.02]')}>
             <div className="flex items-center gap-2">
               <span className={cx('h-2 w-2 rounded-full animate-pulse', dataMode === 'live' ? 'bg-emerald-500' : 'bg-amber-400')} />
@@ -480,14 +480,14 @@ export const AdminPage = () => {
       {/* ------------------------------------------------------------- */}
       {/* MAIN LAYOUT WRAPPER                                           */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col h-full min-w-0 overflow-hidden">
         {/* ----------------------------------------------------------- */}
         {/* TOP NAVBAR (Profile, Notifications & Theme Switcher)        */}
         {/* ----------------------------------------------------------- */}
         <header
           className={cx(
-            'sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 backdrop-blur-xl sm:px-6',
-            isLight ? 'border-slate-200 bg-white/90' : 'border-white/[0.08] bg-[#07090E]/90',
+            'shrink-0 z-20 flex h-16 items-center justify-between border-b px-4 backdrop-blur-xl sm:px-6',
+            isLight ? 'border-slate-200 bg-white/95' : 'border-white/[0.08] bg-[#07090E]/95',
           )}
         >
           <div className="flex items-center gap-3">
@@ -731,7 +731,7 @@ export const AdminPage = () => {
         {/* ----------------------------------------------------------- */}
         {/* MAIN MODULE CONTENT VIEWPORT                                */}
         {/* ----------------------------------------------------------- */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        <main className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 scrollbar-thin">
           {/* ========================================================= */}
           {/* 1. OVERVIEW & KPIS                                        */}
           {/* ========================================================= */}
