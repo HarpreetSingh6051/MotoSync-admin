@@ -279,17 +279,23 @@ export const Toggle = ({
   label,
   description,
   disabled,
+  className,
 }: {
   checked: boolean
   onChange: (value: boolean) => void
   label: string
   description?: string
   disabled?: boolean
+  className?: string
 }) => (
-  <div className="flex items-start justify-between gap-4">
+  <div className={cx('flex items-start justify-between gap-4', className)}>
     <div className="min-w-0">
-      <p className="text-sm font-medium text-white">{label}</p>
-      {description ? <p className="mt-0.5 text-xs leading-relaxed text-white/45">{description}</p> : null}
+      <p className="text-sm font-medium text-slate-800 dark:text-white transition-colors">{label}</p>
+      {description ? (
+        <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-white/50 transition-colors">
+          {description}
+        </p>
+      ) : null}
     </div>
     <button
       type="button"
@@ -299,18 +305,18 @@ export const Toggle = ({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cx(
-        'relative mt-0.5 h-6 w-11 shrink-0 rounded-full border transition-colors duration-300 disabled:opacity-40',
+        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out disabled:cursor-not-allowed disabled:opacity-40',
         checked
-          ? 'border-pack-400/40 bg-pack-500/80'
-          : 'border-white/12 bg-white/[0.07]',
+          ? 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+          : 'bg-slate-300 dark:bg-white/20',
       )}
     >
       <span
+        aria-hidden="true"
         className={cx(
-          'absolute top-0.5 rounded-full bg-white shadow transition-transform duration-300',
-          checked ? 'translate-x-[22px]' : 'translate-x-0.5',
+          'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out',
+          checked ? 'translate-x-5' : 'translate-x-0',
         )}
-        style={{ height: 18, width: 18 }}
       />
     </button>
   </div>

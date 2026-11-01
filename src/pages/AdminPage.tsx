@@ -53,7 +53,7 @@ import { Logo } from '@/components/ui'
 import { ToastHost } from '@/components/ToastHost'
 import { useAppStore } from '@/store/useAppStore'
 import { useConfigStore } from '@/store/useConfigStore'
-import { useAdminUsers, useAdminClubs, useAdminPurchases, type SubscriptionPurchase } from '@/lib/adminData'
+import { useAdminUsers, useAdminClubs, useAdminPurchases, updateClubVerification, type SubscriptionPurchase } from '@/lib/adminData'
 import {
   fetchPlatformConfig,
   logAdminAction,
@@ -394,28 +394,51 @@ export const AdminPage = () => {
                         setSidebarOpen(false)
                       }}
                       className={cx(
-                        'group flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition-all duration-150',
+                        'relative group flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition-all duration-150',
                         active
                           ? isLight
-                            ? 'bg-amber-50 text-amber-800 font-semibold border-l-2 border-amber-500'
-                            : 'bg-gradient-to-r from-amber-400/15 via-amber-400/5 to-transparent text-amber-300 border-l-2 border-amber-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                            ? 'text-amber-950 font-semibold'
+                            : 'text-amber-300 font-semibold'
                           : isLight
-                          ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                          : 'text-white/60 hover:bg-white/[0.04] hover:text-white',
+                          ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                          : 'text-white/60 hover:text-white hover:bg-white/[0.04]',
                       )}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className={cx('h-4 w-4 transition-transform group-hover:scale-110', active ? (isLight ? 'text-amber-600' : 'text-amber-300') : (isLight ? 'text-slate-400' : 'text-white/40'))} />
+                      {active && (
+                        <motion.div
+                          layoutId="sidebar-active-pill"
+                          className={cx(
+                            'absolute inset-0 rounded-xl border-l-[3px]',
+                            isLight
+                              ? 'bg-amber-100/70 border-amber-500 shadow-sm'
+                              : 'bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.15)]',
+                          )}
+                          transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                        />
+                      )}
+                      <div className="relative z-10 flex items-center gap-2.5">
+                        <Icon
+                          className={cx(
+                            'h-4 w-4 transition-transform group-hover:scale-110',
+                            active
+                              ? isLight
+                                ? 'text-amber-600'
+                                : 'text-amber-400'
+                              : isLight
+                              ? 'text-slate-400'
+                              : 'text-white/40',
+                          )}
+                        />
                         <span>{item.label}</span>
                       </div>
                       {item.badge ? (
                         <span
                           className={cx(
-                            'rounded-full px-2 py-0.5 text-[9px] font-semibold',
+                            'relative z-10 rounded-full px-2 py-0.5 text-[9px] font-semibold transition-colors',
                             active
                               ? isLight
-                                ? 'bg-amber-200/60 text-amber-800'
-                                : 'bg-amber-400/20 text-amber-300'
+                                ? 'bg-amber-200 text-amber-900'
+                                : 'bg-amber-400/25 text-amber-300'
                               : isLight
                               ? 'bg-slate-100 text-slate-500'
                               : 'bg-white/[0.06] text-white/40',
@@ -737,7 +760,7 @@ export const AdminPage = () => {
           {/* ========================================================= */}
           {currentModule === 'overview' && (
             <div className="space-y-6">
-              <div>
+              <div className={cx('sticky top-0 z-20 -mx-4 -mt-4 px-4 pt-4 pb-4 backdrop-blur-xl border-b transition-colors sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8', isLight ? 'bg-[#F8FAFC]/95 border-slate-200 shadow-sm' : 'bg-[#07090E]/95 border-white/[0.08] shadow-sm')}>
                 <h1 className={cx('font-display text-2xl font-bold tracking-tight', isLight ? 'text-slate-900' : 'text-white')}>Platform Command Center</h1>
                 <p className={cx('text-xs mt-1', isLight ? 'text-slate-500' : 'text-white/40')}>Real-time health, monetization telemetry, and pack activities.</p>
               </div>
@@ -876,46 +899,48 @@ export const AdminPage = () => {
           {/* ========================================================= */}
           {currentModule === 'users' && (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h1 className={cx('font-display text-2xl font-bold tracking-tight', isLight ? 'text-slate-900' : 'text-white')}>Registered Riders & CRM</h1>
-                  <p className={cx('text-xs mt-1', isLight ? 'text-slate-500' : 'text-white/40')}>All riders registered on MotoSync with bike details and account status.</p>
+              <div className={cx('sticky top-0 z-20 -mx-4 -mt-4 px-4 pt-4 pb-4 backdrop-blur-xl border-b transition-colors space-y-4 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8', isLight ? 'bg-[#F8FAFC]/95 border-slate-200 shadow-sm' : 'bg-[#07090E]/95 border-white/[0.08] shadow-sm')}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h1 className={cx('font-display text-2xl font-bold tracking-tight', isLight ? 'text-slate-900' : 'text-white')}>Registered Riders & CRM</h1>
+                    <p className={cx('text-xs mt-1', isLight ? 'text-slate-500' : 'text-white/40')}>All riders registered on MotoSync with bike details and account status.</p>
+                  </div>
                 </div>
-              </div>
 
-              {/* Search & Role Filter Tabs */}
-              <div className="flex flex-col sm:flex-row items-center gap-3">
-                <div className="relative flex-1 w-full">
-                  <Search className={cx('absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4', isLight ? 'text-slate-400' : 'text-white/40')} />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by name, @handle, bike model, or city..."
-                    className={cx(
-                      'w-full rounded-xl border py-2.5 pl-10 pr-4 text-xs focus:outline-none focus:border-amber-500',
-                      isLight ? 'border-slate-200 bg-white text-slate-900 placeholder-slate-400' : 'border-white/10 bg-[#0E131F] text-white placeholder-white/30',
-                    )}
-                  />
-                </div>
-                <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
-                  {['all', 'super_admin', 'road_captain', 'rider', 'pro'].map((role) => (
-                    <button
-                      key={role}
-                      type="button"
-                      onClick={() => setUserRoleFilter(role)}
+                {/* Search & Role Filter Tabs */}
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <div className="relative flex-1 w-full">
+                    <Search className={cx('absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4', isLight ? 'text-slate-400' : 'text-white/40')} />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search by name, @handle, bike model, or city..."
                       className={cx(
-                        'rounded-xl px-3 py-2 text-xs font-medium whitespace-nowrap capitalize transition',
-                        userRoleFilter === role
-                          ? 'bg-amber-400/20 text-amber-600 dark:text-amber-300 border border-amber-400/40'
-                          : isLight
-                          ? 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900'
-                          : 'bg-white/[0.04] text-white/50 hover:text-white',
+                        'w-full rounded-xl border py-2.5 pl-10 pr-4 text-xs focus:outline-none focus:border-amber-500',
+                        isLight ? 'border-slate-200 bg-white text-slate-900 placeholder-slate-400' : 'border-white/10 bg-[#0E131F] text-white placeholder-white/30',
                       )}
-                    >
-                      {role.replace('_', ' ')}
-                    </button>
-                  ))}
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
+                    {['all', 'super_admin', 'road_captain', 'rider', 'pro'].map((role) => (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => setUserRoleFilter(role)}
+                        className={cx(
+                          'rounded-xl px-3 py-2 text-xs font-medium whitespace-nowrap capitalize transition',
+                          userRoleFilter === role
+                            ? 'bg-amber-400/20 text-amber-600 dark:text-amber-300 border border-amber-400/40'
+                            : isLight
+                            ? 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900'
+                            : 'bg-white/[0.04] text-white/50 hover:text-white',
+                        )}
+                      >
+                        {role.replace('_', ' ')}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -1007,7 +1032,7 @@ export const AdminPage = () => {
           {/* ========================================================= */}
           {currentModule === 'clubs' && (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className={cx('sticky top-0 z-20 -mx-4 -mt-4 px-4 pt-4 pb-4 backdrop-blur-xl border-b transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8', isLight ? 'bg-[#F8FAFC]/95 border-slate-200 shadow-sm' : 'bg-[#07090E]/95 border-white/[0.08] shadow-sm')}>
                 <div>
                   <h1 className={cx('font-display text-2xl font-bold tracking-tight', isLight ? 'text-slate-900' : 'text-white')}>Ride Groups & Clubs</h1>
                   <p className={cx('text-xs mt-1', isLight ? 'text-slate-500' : 'text-white/40')}>Club lounges, verified captain rosters, and member communities.</p>
@@ -1069,6 +1094,7 @@ export const AdminPage = () => {
                         variant={club.verified ? 'ghost' : 'secondary'}
                         onClick={() => {
                           club.verified = !club.verified
+                          updateClubVerification(club.id, club.verified)
                           pushToast('Club Status', `${club.name} verified badge ${club.verified ? 'granted' : 'revoked'}.`, 'default')
                         }}
                       >
@@ -1086,7 +1112,7 @@ export const AdminPage = () => {
           {/* ========================================================= */}
           {currentModule === 'plans' && (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className={cx('sticky top-0 z-20 -mx-4 -mt-4 px-4 pt-4 pb-4 backdrop-blur-xl border-b transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8', isLight ? 'bg-[#F8FAFC]/95 border-slate-200 shadow-sm' : 'bg-[#07090E]/95 border-white/[0.08] shadow-sm')}>
                 <div>
                   <h1 className={cx('font-display text-2xl font-bold tracking-tight', isLight ? 'text-slate-900' : 'text-white')}>Subscription Catalog</h1>
                   <p className={cx('text-xs mt-1', isLight ? 'text-slate-500' : 'text-white/40')}>Configure prices, limits, and rider badge perks across tiers.</p>
@@ -1191,7 +1217,7 @@ export const AdminPage = () => {
           {/* ========================================================= */}
           {currentModule === 'reports' && (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className={cx('sticky top-0 z-20 -mx-4 -mt-4 px-4 pt-4 pb-4 backdrop-blur-xl border-b transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8', isLight ? 'bg-[#F8FAFC]/95 border-slate-200 shadow-sm' : 'bg-[#07090E]/95 border-white/[0.08] shadow-sm')}>
                 <div>
                   <h1 className={cx('font-display text-2xl font-bold tracking-tight', isLight ? 'text-slate-900' : 'text-white')}>Subscription Purchases Report</h1>
                   <p className={cx('text-xs mt-1', isLight ? 'text-slate-500' : 'text-white/40')}>Audit log of all rider membership purchases, transaction IDs, and settlement status.</p>
@@ -1279,7 +1305,7 @@ export const AdminPage = () => {
           {/* ========================================================= */}
           {currentModule === 'flags' && (
             <div className="space-y-6">
-              <div>
+              <div className={cx('sticky top-0 z-20 -mx-4 -mt-4 px-4 pt-4 pb-4 backdrop-blur-xl border-b transition-colors sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8', isLight ? 'bg-[#F8FAFC]/95 border-slate-200 shadow-sm' : 'bg-[#07090E]/95 border-white/[0.08] shadow-sm')}>
                 <h1 className={cx('font-display text-2xl font-bold tracking-tight', isLight ? 'text-slate-900' : 'text-white')}>Feature Governance & Module Switches</h1>
                 <p className={cx('text-xs mt-1', isLight ? 'text-slate-500' : 'text-white/40')}>Enable/disable features per module, adjust pack radar thresholds, and configure helmet intercom.</p>
               </div>
@@ -1443,7 +1469,7 @@ export const AdminPage = () => {
           {/* ========================================================= */}
           {currentModule === 'sounds' && (
             <div className="space-y-6">
-              <div>
+              <div className={cx('sticky top-0 z-20 -mx-4 -mt-4 px-4 pt-4 pb-4 backdrop-blur-xl border-b transition-colors sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8', isLight ? 'bg-[#F8FAFC]/95 border-slate-200 shadow-sm' : 'bg-[#07090E]/95 border-white/[0.08] shadow-sm')}>
                 <h1 className={cx('font-display text-2xl font-bold tracking-tight', isLight ? 'text-slate-900' : 'text-white')}>Digital Garage Exhaust Vault</h1>
                 <p className={cx('text-xs mt-1', isLight ? 'text-slate-500' : 'text-white/40')}>Motorcycle acoustic synthesis signatures and tachometer audio engine.</p>
               </div>
@@ -1503,7 +1529,7 @@ export const AdminPage = () => {
           {/* ========================================================= */}
           {currentModule === 'campaigns' && (
             <div className="space-y-6">
-              <div>
+              <div className={cx('sticky top-0 z-20 -mx-4 -mt-4 px-4 pt-4 pb-4 backdrop-blur-xl border-b transition-colors sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8', isLight ? 'bg-[#F8FAFC]/95 border-slate-200 shadow-sm' : 'bg-[#07090E]/95 border-white/[0.08] shadow-sm')}>
                 <h1 className={cx('font-display text-2xl font-bold tracking-tight', isLight ? 'text-slate-900' : 'text-white')}>Sponsored Pitstop Campaigns</h1>
                 <p className={cx('text-xs mt-1', isLight ? 'text-slate-500' : 'text-white/40')}>Configure geo-targeted sponsor cards along pack ride routes.</p>
               </div>
@@ -1551,7 +1577,7 @@ export const AdminPage = () => {
           {/* ========================================================= */}
           {currentModule === 'settings' && (
             <div className="space-y-6">
-              <div>
+              <div className={cx('sticky top-0 z-20 -mx-4 -mt-4 px-4 pt-4 pb-4 backdrop-blur-xl border-b transition-colors sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8', isLight ? 'bg-[#F8FAFC]/95 border-slate-200 shadow-sm' : 'bg-[#07090E]/95 border-white/[0.08] shadow-sm')}>
                 <h1 className={cx('font-display text-2xl font-bold tracking-tight', isLight ? 'text-slate-900' : 'text-white')}>Platform Settings & Appearance</h1>
                 <p className={cx('text-xs mt-1', isLight ? 'text-slate-500' : 'text-white/40')}>Theme customizer, cross-app endpoints, and system controls.</p>
               </div>

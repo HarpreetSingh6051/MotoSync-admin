@@ -7,6 +7,8 @@ import { useConfigStore } from '@/store/useConfigStore'
 
 type Row = Record<string, unknown>
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://moto-sync-be.vercel.app/api/v1').replace(/\/$/, '')
+
 const str = (value: unknown, fallback = '') =>
   typeof value === 'string' ? value : fallback
 
@@ -26,38 +28,50 @@ const asStatus = (value: unknown): AccountStatus =>
 const mapProfile = (row: Row): Profile => ({
   id: str(row.id),
   handle: str(row.handle, 'rider'),
-  fullName: str(row.full_name, str(row.handle, 'Rider')),
+  fullName: str(row.full_name || row.fullName, str(row.handle, 'Rider')),
   city: str(row.city, 'Unknown'),
   country: str(row.country, 'IN'),
-  primaryBike: str(row.primary_bike, 'Motorcycle'),
+  primaryBike: str(row.primary_bike || row.primaryBike, 'Motorcycle'),
   bio: str(row.bio),
-  isPro: Boolean(row.is_pro),
-  totalKm: num(row.total_km),
-  followers: num(row.followers),
-  following: num(row.following),
+  isPro: Boolean(row.is_pro ?? row.isPro),
+  totalKm: num(row.total_km ?? row.totalKm),
+  followers: num(row.followers ?? row.followers_count),
+  following: num(row.following ?? row.following_count),
   accent: str(row.accent, '#F43F5E'),
-  avatarSeed: str(row.avatar_seed, 'rider'),
-  ridingNow: Boolean(row.riding_now),
+  avatarSeed: str(row.avatar_seed || row.avatarSeed, 'rider'),
+  ridingNow: Boolean(row.riding_now ?? row.ridingNow),
   role: asRole(row.role),
   status: asStatus(row.status),
-  subscriptionPlanId: str(row.subscription_plan_id) || undefined,
-  selectedExhaustSound: str(row.selected_exhaust_sound) || undefined,
+  subscriptionPlanId: str(row.subscription_plan_id || row.subscriptionPlanId) || undefined,
+  selectedExhaustSound: str(row.selected_exhaust_sound || row.selectedExhaustSound) || undefined,
   phone: str(row.phone) || undefined,
-  lastActiveAt: str(row.last_active_at) || undefined,
+  lastActiveAt: str(row.last_active_at || row.lastActiveAt) || undefined,
 })
 
 const fetchAdminProfiles = async (): Promise<Profile[]> => {
-  const client = supabase
-  if (!client) return mockProfiles
-
   try {
-    const { data, error } = await client
-      .from('profiles')
-      .select('*')
-      .order('full_name', { ascending: true })
-    if (!error && data?.length) return (data as Row[]).map(mapProfile)
+    const res = await fetch(`${API_BASE}/users`)
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data) && data.length > 0) {
+        return (data as Row[]).map(mapProfile)
+      }
+    }
   } catch {
-    /* fall back to the seeded directory */
+    /* fallback to Supabase */
+  }
+
+  const client = supabase
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from('profiles')
+        .select('*')
+        .order('full_name', { ascending: true })
+      if (!error && data?.length) return (data as Row[]).map(mapProfile)
+    } catch {
+      /* fall back to the seeded directory */
+    }
   }
 
   return mockProfiles
@@ -198,8 +212,75 @@ export const mockClubs: Club[] = [
   },
 ]
 
-export const useAdminClubs = () => {
-  return useMemo(() => mockClubs, [])
+export const mapClubRow = (row: Row): Club => ({
+  id: str(row.id),
+  name: str(row.name, 'Untitled Club'),
+  handle: str(row.handle, 'club'),
+  description: str(row.description, ''),
+  city: str(row.city, 'Unknown'),
+  region: (str(row.region) === 'Global' ? 'Global' : 'India') as Region,
+  ridingStyle: str(row.riding_style || row.ridingStyle, 'Cruisers & Touring'),
+  badgeEmoji: str(row.badge_emoji || row.badgeEmoji, '🏍️'),
+  privacy: (str(row.privacy) === 'invite_only' ? 'invite_only' : 'public') as 'public' | 'invite_only',
+  verified: Boolean(row.verified),
+  memberCount: num(row.member_count || row.memberCount, 1),
+  ridingNow: num(row.riding_now || row.ridingNow, 0),
+  accent: str(row.accent, '#F43F5E'),
+  createdBy: str(row.created_by || row.createdBy, 'u_arjun'),
+  memberIds: Array.isArray(row.member_ids || row.memberIds) ? (row.member_ids || row.memberIds) as string[] : [],
+  founded: str(row.founded, '2022'),
+})
+
+export const fetchAdminClubs = async (): Promise<Club[]> => {
+  try {
+    const res = await fetch(`${API_BASE}/clubs`)
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data) && data.length > 0) {
+        return (data as Row[]).map(mapClubRow)
+      }
+    }
+  } catch {
+    /* fallback to Supabase */
+  }
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('clubs')
+        .select('*')
+        .order('member_count', { ascending: false })
+      if (!error && data?.length) return (data as Row[]).map(mapClubRow)
+    } catch {
+      /* fallback */
+    }
+  }
+
+  return mockClubs
+}
+
+export const useAdminClubs = (): Club[] => {
+  const { data } = useQuery({
+    queryKey: ['admin-clubs'],
+    queryFn: fetchAdminClubs,
+    staleTime: 30_000,
+  })
+  return data ?? mockClubs
+}
+
+export const updateClubVerification = async (clubId: string, verified: boolean) => {
+  try {
+    await fetch(`${API_BASE}/clubs/${clubId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ verified }),
+    })
+  } catch {}
+  if (supabase) {
+    try {
+      await supabase.from('clubs').update({ verified }).eq('id', clubId)
+    } catch {}
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -220,6 +301,29 @@ export interface SubscriptionPurchase {
   purchasedAt: string
   paymentMethod: 'UPI / Razorpay' | 'Credit Card / Stripe' | 'Apple Pay'
   status: 'paid' | 'renewed' | 'pending'
+}
+
+export const fetchAdminPurchases = async (): Promise<SubscriptionPurchase[]> => {
+  try {
+    const res = await fetch(`${API_BASE}/reports/purchases`)
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data) && data.length > 0) {
+        return data as SubscriptionPurchase[]
+      }
+    }
+  } catch {}
+
+  return mockPurchases
+}
+
+export const useAdminPurchases = (): SubscriptionPurchase[] => {
+  const { data } = useQuery({
+    queryKey: ['admin-purchases'],
+    queryFn: fetchAdminPurchases,
+    staleTime: 30_000,
+  })
+  return data ?? mockPurchases
 }
 
 export const mockPurchases: SubscriptionPurchase[] = [
@@ -300,6 +404,4 @@ export const mockPurchases: SubscriptionPurchase[] = [
   },
 ]
 
-export const useAdminPurchases = () => {
-  return useMemo(() => mockPurchases, [])
-}
+
