@@ -1,3 +1,4 @@
+import { environment } from '@/lib/environment'
 import { useMemo, useState, useEffect } from 'react'
 import {
   Activity,
@@ -106,8 +107,8 @@ interface NavGroup {
   }>
 }
 
-const RIDER_APP_URL = import.meta.env.VITE_APP_URL || 'https://moto-sync-ochre.vercel.app'
-const BACKEND_API_URL = import.meta.env.VITE_API_BASE_URL || 'https://moto-sync-be.vercel.app/api/v1'
+const RIDER_APP_URL = environment.riderUrl
+const BACKEND_API_URL = environment.apiBase
 
 export const AdminPage = () => {
   const [currentModule, setCurrentModule] = useState<NavModule>('overview')
@@ -1629,7 +1630,7 @@ export const AdminPage = () => {
                   <div className="space-y-3 text-xs">
                     <div>
                       <p className={cx('text-[10px] uppercase font-semibold', isLight ? 'text-slate-500' : 'text-white/40')}>Supabase Cloud URL</p>
-                      <p className="font-mono mt-0.5 break-all text-amber-600 dark:text-amber-400">https://hxsifqmspboitoqnkvwj.supabase.co</p>
+                      <p className="font-mono mt-0.5 break-all text-amber-600 dark:text-amber-400">{environment.supabaseUrl}</p>
                     </div>
                     <div>
                       <p className={cx('text-[10px] uppercase font-semibold', isLight ? 'text-slate-500' : 'text-white/40')}>Backend REST API</p>

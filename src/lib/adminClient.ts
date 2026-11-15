@@ -1,4 +1,5 @@
-﻿import { supabase } from "./supabase";
+import { apiUrl } from "./environment";
+import { supabase } from "./supabase";
 export type Row = Record<string, any>;
 export async function adminRequest<T = any>(
   path: string,
@@ -7,10 +8,7 @@ export async function adminRequest<T = any>(
   const session = await supabase?.auth.getSession();
   const token = session?.data.session?.access_token;
   if (!token) throw new Error("Sign in to continue");
-  const base = (
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:4000/api/v1"
-  ).replace(/\/$/, "");
-  const response = await fetch(`${base}${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...options,
     headers: {
       "Content-Type": "application/json",

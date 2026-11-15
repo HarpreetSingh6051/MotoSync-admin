@@ -30,3 +30,8 @@ dist-ssr
 
 .vercel
 .env*
+
+# Public service routing only; credentials remain in ignored local files or host settings.
+!.env.example
+!.env.development
+!.env.production

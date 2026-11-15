@@ -130,7 +130,7 @@ export function AdminConsole() {
     setMessage("");
     try {
       if (!supabase)
-        throw Error("Configure the Supabase public URL and key first");
+        throw Error("Configure VITE_API_BASE_URL, VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY first");
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -200,7 +200,7 @@ export function AdminConsole() {
           </button>
           {!supabase && (
             <p role="alert">
-              Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.
+              Configure VITE_API_BASE_URL, VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.
             </p>
           )}
           {message && <p role="alert">{message}</p>}

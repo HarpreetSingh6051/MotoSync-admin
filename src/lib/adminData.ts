@@ -1,3 +1,4 @@
+import { environment } from './environment'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { AccountStatus, AdminRole, Club, Profile, Region } from '@/types'
@@ -7,7 +8,7 @@ import { useConfigStore } from '@/store/useConfigStore'
 
 type Row = Record<string, unknown>
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://moto-sync-be.vercel.app/api/v1').replace(/\/$/, '')
+const API_BASE = environment.apiBase
 
 const str = (value: unknown, fallback = '') =>
   typeof value === 'string' ? value : fallback

@@ -1,7 +1,8 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { environment, apiUrl } from "./environment";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const url = import.meta.env.VITE_SUPABASE_URL?.trim()
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
+const url = environment.supabaseUrl;
+const anonKey = environment.supabaseAnonKey;
 
 /**
  * The app runs in two modes:
@@ -12,10 +13,31 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
  * This is intentional: the UI, the flows and the AI features are fully usable
  * before a single backend credential exists.
  */
-export const isSupabaseConfigured = Boolean(url && anonKey)
+export const isSupabaseConfigured = Boolean(
+  url && anonKey && environment.apiBase,
+);
 
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(url as string, anonKey as string, {
+      global: {
+        fetch: (input, init) => {
+          const original = new URL(
+            typeof input === "string"
+              ? input
+              : input instanceof URL
+                ? input.href
+                : input.url,
+          );
+          // Keep the SDK session lifecycle while sending all Auth HTTP traffic through NestJS.
+          if (
+            original.origin === new URL(url).origin &&
+            original.pathname.startsWith("/auth/v1/")
+          ) {
+            return fetch(apiUrl(original.pathname + original.search), init);
+          }
+          return fetch(input, init);
+        },
+      },
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -25,16 +47,16 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
         params: { eventsPerSecond: 10 },
       },
     })
-  : null
+  : null;
 
-export const dataMode = isSupabaseConfigured ? 'live' : 'demo'
+export const dataMode = isSupabaseConfigured ? "live" : "demo";
 
 export const getAppUrl = () =>
-  import.meta.env.VITE_APP_URL?.trim() || window.location.origin
+  import.meta.env.VITE_APP_URL?.trim() || window.location.origin;
 
 export const publicMediaUrl = (path?: string | null) => {
-  if (!path) return null
-  if (path.startsWith('http') || path.startsWith('data:')) return path
-  const base = import.meta.env.VITE_R2_PUBLIC_BASE_URL?.trim()
-  return base ? `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}` : path
-}
+  if (!path) return null;
+  if (path.startsWith("http") || path.startsWith("data:")) return path;
+  const base = import.meta.env.VITE_R2_PUBLIC_BASE_URL?.trim();
+  return base ? `${base.replace(/\/$/, "")}/${path.replace(/^\//, "")}` : path;
+};
