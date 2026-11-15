@@ -1,0 +1,10 @@
+﻿import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import ts from 'typescript';
+const source=readFileSync(new URL('../src/lib/reportCsv.ts',import.meta.url),'utf8');
+const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const {reportCsv}=await import('data:text/javascript;base64,'+Buffer.from(compiled).toString('base64'));
+test('CSV quotes commas, quotes, and line breaks without losing rows',()=>{const csv=reportCsv([{city:'City, "Central"',riders:12}]);assert.equal(csv,'"city","riders"\r\n"City, ""Central""","12"')});
+test('CSV neutralizes spreadsheet formula cells',()=>{const csv=reportCsv([{country:'=HYPERLINK("bad")',riders:1}]);assert.ok(csv.includes('"\'=HYPERLINK'));assert.ok(csv.endsWith(',"1"'))});
+test('empty reports are valid and have no invented data',()=>assert.equal(reportCsv([]),''));

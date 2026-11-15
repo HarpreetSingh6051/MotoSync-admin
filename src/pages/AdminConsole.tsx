@@ -1,3 +1,8 @@
+import { Skeleton } from "@/components/Skeleton";
+import { lazy, Suspense } from "react";
+const AnalyticsPanel=lazy(()=>import("./AnalyticsPanel").then(module=>({default:module.AnalyticsPanel})));
+import { OperationComposer } from "./OperationComposer";
+import { ExportReports } from "./ExportReports";
 import { AdminAccountsPanel } from "./AdminAccountsPanel";
 import { navigationGroups, modules } from "./adminNavigation";
 import { identityChanged } from "@/lib/queryPolicy";
@@ -64,6 +69,10 @@ export function AdminConsole() {
   const [account, setAccount] = useState<{ email?: string; name?: string }>({});
   const identity = useRef<string | null>(null);
   const [searchInput, setSearchInput] = useState("");
+  const [country, setCountry] = useState(""),
+    [city, setCity] = useState("");
+  const [countryInput, setCountryInput] = useState(""),
+    [cityInput, setCityInput] = useState("");
   const [popover, setPopover] = useState<"notifications" | "profile" | null>(
     null,
   );
@@ -145,19 +154,21 @@ export function AdminConsole() {
     };
   }, [!!club, !!plan, !!rider]);
   const endpoint =
-    module === "admin_accounts"
-      ? "/admin/accounts"
-      : module === "admin_roles"
-        ? "/admin/roles"
-        : ["flags", "sounds", "campaigns"].includes(module)
-          ? "/admin/config/" + module
-          : module === "reports"
-            ? "/reports/purchases"
-            : module === "settings"
-              ? "/health"
-              : module === "plans"
-                ? "/plans/admin"
-                : `/admin/${module}${["users", "clubs", "rides"].includes(module) ? `?page=${page}&search=${encodeURIComponent(search)}` : ""}`;
+    module === "exports"
+      ? "/health"
+      : module === "admin_accounts"
+        ? "/admin/accounts"
+        : module === "admin_roles"
+          ? "/admin/roles"
+          : ["flags", "sounds", "campaigns"].includes(module)
+            ? "/admin/config/" + module
+            : module === "reports"
+              ? "/reports/purchases"
+              : module === "settings"
+                ? "/health"
+                : module === "plans"
+                  ? "/plans/admin"
+                  : `/admin/${module}${["users", "clubs", "rides", "announcements", "alerts"].includes(module) ? `?page=${page}&search=${encodeURIComponent(search)}&country=${encodeURIComponent(country)}&city=${encodeURIComponent(city)}` : ""}`;
   const query = useQuery({
     queryKey: ["console", endpoint],
     queryFn: () => adminRequest(endpoint),
@@ -231,8 +242,8 @@ export function AdminConsole() {
   }
   if (checking)
     return (
-      <div className="console-login" role="status">
-        Checking session…
+      <div className="console-login">
+        <Skeleton kind="form" />
       </div>
     );
   if (!authenticated)
@@ -387,11 +398,13 @@ export function AdminConsole() {
             </button>
             <button
               className="secondary console-icon-button"
-              aria-label="Notifications"
+              aria-label="Operational alerts"
               aria-expanded={popover === "notifications"}
-              onClick={() =>
-                setPopover(popover === "notifications" ? null : "notifications")
-              }
+              onClick={() => {
+                setModule("alerts");
+                setPage(1);
+                setPopover(null);
+              }}
             >
               <Bell size={18} />
             </button>
@@ -478,9 +491,13 @@ export function AdminConsole() {
             </p>
           </section>
         ) : query.isPending ? (
-          <div className="console-skeleton" role="status">
-            Loading live records…
-          </div>
+          <Skeleton
+            kind={
+              module === "dashboard" || module === "analytics"
+                ? "dashboard"
+                : "table"
+            }
+          />
         ) : query.isError ? (
           <section className="console-card" role="alert">
             <h2>Unable to load this module</h2>
@@ -588,61 +605,158 @@ export function AdminConsole() {
                         }
                       </span>
                       <strong>{Number(count).toLocaleString()}</strong>
-                      <small>From your database</small>
+                      <small>Current platform total</small>
                     </section>
                   ))}
                 </div>
-                <div className="console-charts">
-                  <section className="console-card">
-                    <h2>New riders</h2>
-                    <p>Registrations over the last 30 days</p>
-                    <div
-                      className="console-bars"
-                      role="img"
-                      aria-label="Daily registration totals; exact values listed below"
-                    >
-                      {data.trend.map((day: Row) => (
-                        <div
-                          key={day.day}
-                          title={`${day.day}: ${day.registrations}`}
-                        >
-                          <i
-                            style={{
-                              height: `${Math.max(2, (Number(day.registrations) / Math.max(1, ...data.trend.map((d: Row) => Number(d.registrations)))) * 100)}%`,
-                            }}
-                          />
-                        </div>
+                <Suspense fallback={<Skeleton kind="dashboard"/>}><AnalyticsPanel
+                  analytics={data.analytics || {}}
+                  trend={data.trend}
+                  distribution={data.distribution}
+                  onCountry={(value, selectedCity="") => {
+                    setCountry(value);
+                    setCountryInput(value);
+                    setCity(selectedCity);setCityInput(selectedCity);setSearch("");setSearchInput("");
+                    setModule("users");
+                    setPage(1);
+                  }}
+                /></Suspense>
+              </>
+            )}
+            {module === "analytics" && data && (
+              <Suspense fallback={<Skeleton kind="dashboard"/>}><AnalyticsPanel
+                analytics={data}
+                onCountry={(value, selectedCity="") => {
+                  setCountry(value);
+                  setCountryInput(value);
+                  setCity(selectedCity);setCityInput(selectedCity);setSearch("");setSearchInput("");
+                  setModule("users");
+                  setPage(1);
+                }}
+              /></Suspense>
+            )}
+            {module === "exports" && <ExportReports />}
+            {["clubs", "rides", "announcements"].includes(module) && (
+              <div className="console-module-intro">
+                <p>
+                  {module === "clubs"
+                    ? "Create a group and assign its rider owner."
+                    : module === "rides"
+                      ? "Plan an upcoming ride with an active captain."
+                      : "Publish announcements to riders or group members."}
+                </p>
+                <OperationComposer
+                  key={module}
+                  kind={
+                    module === "clubs"
+                      ? "club"
+                      : module === "rides"
+                        ? "ride"
+                        : "announcement"
+                  }
+                  busy={busy}
+                  notice={message}
+                  save={mutate}
+                />
+              </div>
+            )}
+            {["announcements", "alerts"].includes(module) && (
+              <>
+                <div className="console-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Title</th>
+                        <th>{module === "alerts" ? "Severity" : "Audience"}</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((row) => (
+                        <tr key={row.id}>
+                          <td>
+                            <strong>{row.title}</strong>
+                            <details>
+                              <summary>Read message</summary>
+                              <p>{row.message || row.body}</p>
+                            </details>
+                            <small>
+                              {new Date(row.created_at).toLocaleString()}
+                            </small>
+                          </td>
+                          <td>{row.severity || row.audience}</td>
+                          <td>
+                            {module === "alerts"
+                              ? row.acknowledged_at
+                                ? "Acknowledged"
+                                : "Open"
+                              : row.status === "published" &&
+                                  new Date(row.publish_at) > new Date()
+                                ? "Scheduled"
+                                : row.status}
+                          </td>
+                          <td>
+                            {module === "alerts"
+                              ? !row.acknowledged_at && (
+                                  <button
+                                    className="secondary"
+                                    disabled={busy}
+                                    onClick={() =>
+                                      mutate(
+                                        "/admin/alerts/" +
+                                          row.id +
+                                          "/acknowledge",
+                                        {},
+                                      )
+                                    }
+                                  >
+                                    Acknowledge
+                                  </button>
+                                )
+                              : row.status === "published" && (
+                                  <button
+                                    className="secondary"
+                                    disabled={busy}
+                                    onClick={() =>
+                                      mutate(
+                                        "/admin/announcements/" +
+                                          row.id +
+                                          "/archive",
+                                        {},
+                                      )
+                                    }
+                                  >
+                                    Unpublish
+                                  </button>
+                                )}
+                          </td>
+                        </tr>
                       ))}
-                    </div>
-                    <details>
-                      <summary>View daily totals</summary>
-                      {data.trend.map((d: Row) => (
-                        <p key={d.day}>
-                          {d.day}: {d.registrations}
-                        </p>
-                      ))}
-                    </details>
-                  </section>
-                  <section className="console-card">
-                    <h2>Plan distribution</h2>
-                    <p>Current rider assignments</p>
-                    {data.distribution.length ? (
-                      data.distribution.map((d: Row) => (
-                        <div className="console-distribution" key={d.name}>
-                          <span>{d.name}</span>
-                          <strong>{d.subscribers}</strong>
-                          <meter
-                            min={0}
-                            max={Math.max(1, data.counts.profiles)}
-                            value={Number(d.subscribers)}
-                            aria-label={`${d.name} subscribers`}
-                          />
-                        </div>
-                      ))
-                    ) : (
-                      <p>No registrations yet.</p>
-                    )}
-                  </section>
+                    </tbody>
+                  </table>
+                  {!items.length && (
+                    <p className="console-empty">No {module} yet.</p>
+                  )}
+                </div>
+                <div className="console-pagination">
+                  <button
+                    className="secondary"
+                    disabled={page === 1}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    Previous
+                  </button>
+                  <span>
+                    Page {page} ? {data.total} records
+                  </span>
+                  <button
+                    className="secondary"
+                    disabled={page * 25 >= data.total}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    Next
+                  </button>
                 </div>
               </>
             )}
@@ -653,6 +767,8 @@ export function AdminConsole() {
                   onSubmit={(event) => {
                     event.preventDefault();
                     setSearch(searchInput);
+                    setCountry(countryInput);
+                    setCity(cityInput);
                     setPage(1);
                   }}
                 >
@@ -669,6 +785,26 @@ export function AdminConsole() {
                   <button className="secondary" type="submit">
                     Search
                   </button>
+                  {module === "users" && (
+                    <>
+                      <label>
+                        Country
+                        <input
+                          value={countryInput}
+                          placeholder="Country code or saved name"
+                          onChange={(e) => setCountryInput(e.target.value)}
+                        />
+                      </label>
+                      <label>
+                        City
+                        <input
+                          value={cityInput}
+                          placeholder="Exact city name"
+                          onChange={(e) => setCityInput(e.target.value)}
+                        />
+                      </label>
+                    </>
+                  )}
                 </form>
                 <div className="console-table">
                   <table>
@@ -921,7 +1057,7 @@ export function AdminConsole() {
                 Refresh memberships
               </button>
               {groups.isPending ? (
-                <p>Loading groups?</p>
+                <Skeleton kind="detail" />
               ) : groups.isError ? (
                 <div role="alert">
                   {groups.error.message}
@@ -967,7 +1103,7 @@ export function AdminConsole() {
                 Refresh members
               </button>
               {members.isPending ? (
-                <p role="status">Loading members…</p>
+                <Skeleton kind="detail" />
               ) : members.isError ? (
                 <div role="alert">
                   {members.error.message}

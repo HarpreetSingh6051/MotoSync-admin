@@ -15,7 +15,10 @@
 export const navigationGroups = [
   {
     name: "Command center",
-    items: [{ id: "dashboard", name: "Overview & KPIs", icon: Activity }],
+    items: [
+      { id: "dashboard", name: "Overview & KPIs", icon: Activity },
+      { id: "analytics", name: "Regions & growth", icon: BarChart3 },
+    ],
   },
   {
     name: "Community & riders",
@@ -23,6 +26,7 @@ export const navigationGroups = [
       { id: "users", name: "Registered riders", icon: Users },
       { id: "clubs", name: "Ride groups & clubs", icon: Shield },
       { id: "rides", name: "Ride directory", icon: Route },
+      { id: "announcements", name: "Announcements", icon: Megaphone },
     ],
   },
   {
@@ -46,6 +50,8 @@ export const navigationGroups = [
       { id: "admin_accounts", name: "Admin accounts", icon: Users },
       { id: "admin_roles", name: "Admin roles", icon: Shield },
       { id: "audit", name: "Audit history", icon: ScrollText },
+      { id: "alerts", name: "Operational alerts", icon: Bell },
+      { id: "exports", name: "Export reports", icon: BarChart3 },
       { id: "notifications", name: "Notifications", icon: Bell },
       { id: "settings", name: "Platform & themes", icon: Settings },
     ],
