@@ -162,8 +162,8 @@ export function AnalyticsPanel({
     }
     return result;
   }, [countries]);
-  const max = Math.max(1, ...Object.values(byCode));
-  const intensity = scaleLinear().domain([0, max]).range([0, 1]);
+  const max = Math.max(0, ...Object.values(byCode));
+  const intensity = scaleLinear().domain([0, Math.max(1, max)]).range([0, 1]);
   const segments = pie<Row>()
     .value((row) => Number(row.rides))
     .sort(null)(analytics.ride_status || []);
