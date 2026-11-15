@@ -1,6 +1,10 @@
+import { AdminAccountsPanel } from "./AdminAccountsPanel";
+import { navigationGroups, modules } from "./adminNavigation";
+import { identityChanged } from "@/lib/queryPolicy";
+import { Bell, Settings, UserRound, ChevronRight } from "lucide-react";
 import { ConfigPanel } from "./ConfigPanel";
 import { environment } from "@/lib/environment";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -16,19 +20,6 @@ import {
 import { supabase } from "@/lib/supabase";
 import { adminRequest, type Row } from "@/lib/adminClient";
 import "./console.css";
-const modules = [
-  { id: "dashboard", name: "Overview", icon: LayoutDashboard },
-  { id: "users", name: "Riders", icon: Users },
-  { id: "clubs", name: "Groups & members", icon: Shield },
-  { id: "plans", name: "Plans & features", icon: Layers },
-  { id: "rides", name: "Rides", icon: Layers },
-  { id: "flags", name: "Feature controls", icon: Shield },
-  { id: "sounds", name: "Sound library", icon: Layers },
-  { id: "campaigns", name: "Campaigns", icon: Layers },
-  { id: "reports", name: "Subscriptions", icon: ScrollText },
-  { id: "settings", name: "Settings", icon: Shield },
-  { id: "audit", name: "Audit history", icon: ScrollText },
-];
 const blankPlan = () => ({
   id: `plan_${crypto.randomUUID()}`,
   name: "",
@@ -70,6 +61,28 @@ export function AdminConsole() {
     media.addEventListener("change", apply);
     return () => media.removeEventListener("change", apply);
   }, [theme]);
+  const [account, setAccount] = useState<{ email?: string; name?: string }>({});
+  const identity = useRef<string | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const [popover, setPopover] = useState<"notifications" | "profile" | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!popover) return;
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPopover(null);
+    };
+    const outside = (event: PointerEvent) => {
+      if (!(event.target as Element)?.closest(".console-topbar"))
+        setPopover(null);
+    };
+    document.addEventListener("keydown", keydown);
+    document.addEventListener("pointerdown", outside);
+    return () => {
+      document.removeEventListener("keydown", keydown);
+      document.removeEventListener("pointerdown", outside);
+    };
+  }, [popover]);
   const cache = useQueryClient();
   useEffect(() => {
     if (!supabase) {
@@ -77,12 +90,25 @@ export function AdminConsole() {
       return;
     }
     supabase.auth.getSession().then(({ data }) => {
+      identity.current = data.session?.user.id ?? null;
+      setAccount({
+        email: data.session?.user.email,
+        name: data.session?.user.user_metadata?.full_name,
+      });
       setAuthenticated(!!data.session);
       setChecking(false);
     });
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      const next = session?.user.id ?? null;
+      if (identityChanged(identity.current, next)) {
+        identity.current = next;
+        cache.clear();
+      }
+      setAccount({
+        email: session?.user.email,
+        name: session?.user.user_metadata?.full_name,
+      });
       setAuthenticated(!!session);
-      cache.clear();
     });
     return () => data.subscription.unsubscribe();
   }, [cache]);
@@ -118,25 +144,36 @@ export function AdminConsole() {
       previous?.focus();
     };
   }, [!!club, !!plan, !!rider]);
-  const endpoint = ["flags", "sounds", "campaigns"].includes(module)
-    ? "/admin/config/" + module
-    : module === "reports"
-      ? "/reports/purchases"
-      : module === "settings"
-        ? "/health"
-        : module === "plans"
-          ? "/plans/admin"
-          : `/admin/${module}${["users", "clubs", "rides"].includes(module) ? `?page=${page}&search=${encodeURIComponent(search)}` : ""}`;
+  const endpoint =
+    module === "admin_accounts"
+      ? "/admin/accounts"
+      : module === "admin_roles"
+        ? "/admin/roles"
+        : ["flags", "sounds", "campaigns"].includes(module)
+          ? "/admin/config/" + module
+          : module === "reports"
+            ? "/reports/purchases"
+            : module === "settings"
+              ? "/health"
+              : module === "plans"
+                ? "/plans/admin"
+                : `/admin/${module}${["users", "clubs", "rides"].includes(module) ? `?page=${page}&search=${encodeURIComponent(search)}` : ""}`;
   const query = useQuery({
     queryKey: ["console", endpoint],
     queryFn: () => adminRequest(endpoint),
-    enabled: authenticated,
+    enabled: authenticated && module !== "notifications",
     retry: false,
   });
   const plans = useQuery<Row[]>({
-    queryKey: ["console", "plans"],
+    queryKey: ["console", "/plans/admin"],
     queryFn: () => adminRequest("/plans/admin"),
-    enabled: authenticated,
+    enabled: authenticated && module === "users",
+    retry: false,
+  });
+  const adminRoles = useQuery<Row[]>({
+    queryKey: ["console", "/admin/roles"],
+    queryFn: () => adminRequest("/admin/roles"),
+    enabled: authenticated && module === "admin_accounts",
     retry: false,
   });
   const groups = useQuery<Row[]>({
@@ -177,8 +214,13 @@ export function AdminConsole() {
     setMessage("");
     try {
       await adminRequest(path, { method, body: JSON.stringify(body) });
-      await cache.invalidateQueries({ queryKey: ["console"] });
-      setMessage("Changes saved");
+      await cache.invalidateQueries({
+        queryKey: ["console"],
+        refetchType: "none",
+      });
+      setMessage(
+        "Changes saved. Refresh this view to load the latest records.",
+      );
       return true;
     } catch (error) {
       setMessage((error as Error).message);
@@ -242,10 +284,18 @@ export function AdminConsole() {
   return (
     <div className={`console-shell ${collapsed ? "is-collapsed" : ""}`}>
       <aside>
-        <a className="console-brand" href="#">
-          M
+        <a
+          className="console-brand"
+          href="#"
+          onClick={(event) => {
+            event.preventDefault();
+            setModule("dashboard");
+            setPopover(null);
+          }}
+        >
+          <span className="console-logo-mark">M</span>
           <span className="console-nav-label">
-            otoSync <small>CONTROL ROOM</small>
+            MOTOSYNC <small>SUPER ADMIN PANEL</small>
           </span>
         </a>
         <button
@@ -257,22 +307,32 @@ export function AdminConsole() {
           {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
         </button>
         <nav aria-label="Administration">
-          {modules.map((item) => (
-            <button
-              key={item.id}
-              title={item.name}
-              aria-current={module === item.id ? "page" : undefined}
-              onClick={() => {
-                setModule(item.id);
-                setPage(1);
-                setSearch("");
-                setMessage("");
-                setClub(null);
-              }}
-            >
-              <item.icon size={20} />
-              <span className="console-nav-label">{item.name}</span>
-            </button>
+          {navigationGroups.map((group) => (
+            <details className="console-nav-group" key={group.name} open>
+              <summary title={group.name} aria-label={group.name}>
+                <span className="console-nav-label">{group.name}</span>
+              </summary>
+              {group.items.map((item) => (
+                <button
+                  key={item.id}
+                  title={item.name}
+                  aria-current={module === item.id ? "page" : undefined}
+                  onClick={() => {
+                    setModule(item.id);
+                    setPage(1);
+                    setSearch("");
+                    setSearchInput("");
+                    setMessage("");
+                    setClub(null);
+                    setRider(null);
+                    setPopover(null);
+                  }}
+                >
+                  <item.icon size={17} />
+                  <span className="console-nav-label">{item.name}</span>
+                </button>
+              ))}
+            </details>
           ))}
         </nav>
         <div className="console-side-bottom">
@@ -294,40 +354,130 @@ export function AdminConsole() {
         </div>
       </aside>
       <main>
-        <header>
-          <label className="console-theme">
-            Appearance
-            <select
-              aria-label="Theme"
-              value={theme}
-              onChange={(e) => setTheme(e.target.value)}
-            >
-              <option value="day">Day</option>
-              <option value="night">Night</option>
-              <option value="system">System</option>
-            </select>
-          </label>
-          <div>
-            <span className="console-eyebrow">MOTOSYNC / ADMINISTRATION</span>
-            <h1>{modules.find((item) => item.id === module)?.name}</h1>
+        <div className="console-topbar">
+          <div className="console-breadcrumb">
+            <span>MotoSync ERP</span>
+            <ChevronRight size={15} />
+            <strong>{modules.find((item) => item.id === module)?.name}</strong>
           </div>
-          <button
-            className="secondary"
-            onClick={() => {
-              void query.refetch();
-              void plans.refetch();
-            }}
-            aria-label="Refresh module"
-          >
-            <RefreshCw size={17} /> Refresh
-          </button>
+          <div className="console-top-actions">
+            <fieldset className="console-theme-options">
+              <legend className="sr-only">Appearance</legend>
+              {["day", "night", "system"].map((value) => (
+                <label key={value}>
+                  <input
+                    type="radio"
+                    name="admin-theme"
+                    checked={theme === value}
+                    onChange={() => setTheme(value)}
+                  />
+                  <span>{value}</span>
+                </label>
+              ))}
+            </fieldset>
+            <button
+              className="secondary console-icon-button"
+              aria-label="Settings"
+              onClick={() => {
+                setModule("settings");
+                setPopover(null);
+              }}
+            >
+              <Settings size={18} />
+            </button>
+            <button
+              className="secondary console-icon-button"
+              aria-label="Notifications"
+              aria-expanded={popover === "notifications"}
+              onClick={() =>
+                setPopover(popover === "notifications" ? null : "notifications")
+              }
+            >
+              <Bell size={18} />
+            </button>
+            <button
+              className="secondary console-account"
+              aria-label="Your account"
+              aria-expanded={popover === "profile"}
+              onClick={() =>
+                setPopover(popover === "profile" ? null : "profile")
+              }
+            >
+              <span className="console-avatar">
+                <UserRound size={18} />
+              </span>
+              <span>
+                {account.name || "Administrator"}
+                <small>{account.email}</small>
+              </span>
+            </button>
+          </div>
+          {popover && (
+            <section
+              className="console-popover"
+              aria-label={
+                popover === "notifications" ? "Notifications" : "Your account"
+              }
+            >
+              <button className="secondary" onClick={() => setPopover(null)}>
+                Close
+              </button>
+              <h2>
+                {popover === "notifications" ? "Notifications" : "Your account"}
+              </h2>
+              <p>
+                {popover === "notifications"
+                  ? "Feature not available. Notifications have not been connected yet."
+                  : account.email || "Administrator session"}
+              </p>
+            </section>
+          )}
+        </div>
+        <header className="console-page-heading">
+          <div>
+            <span className="console-eyebrow">WORKSPACE / {module}</span>
+            <h1>{modules.find((item) => item.id === module)?.name}</h1>
+            <p>Manage your community and platform from one place.</p>
+          </div>
+          <div className="console-refresh-group">
+            <small>
+              {query.dataUpdatedAt
+                ? "Updated " +
+                  new Date(query.dataUpdatedAt).toLocaleTimeString()
+                : "Fetch records when needed"}
+            </small>
+            <button
+              className="secondary"
+              disabled={query.isFetching || module === "notifications"}
+              onClick={() => {
+                void query.refetch();
+                if (module === "users") void plans.refetch();
+                if (module === "admin_accounts") void adminRoles.refetch();
+              }}
+              aria-label="Refresh module"
+            >
+              <RefreshCw
+                size={15}
+                className={query.isFetching ? "console-spinning" : ""}
+              />
+              {query.isFetching ? "Refreshing?" : "Refresh"}
+            </button>
+          </div>
         </header>
         {message && (
           <div className="console-notice" role="status">
             {message}
           </div>
         )}
-        {query.isPending ? (
+        {module === "notifications" ? (
+          <section className="console-card">
+            <h2>Feature not available</h2>
+            <p>
+              Notifications have not been connected yet. This module will remain
+              in the navigation.
+            </p>
+          </section>
+        ) : query.isPending ? (
           <div className="console-skeleton" role="status">
             Loading live records…
           </div>
@@ -339,6 +489,17 @@ export function AdminConsole() {
           </section>
         ) : (
           <>
+            {["admin_accounts", "admin_roles"].includes(module) && (
+              <AdminAccountsPanel
+                key={module}
+                kind={module === "admin_accounts" ? "accounts" : "roles"}
+                items={items}
+                roles={adminRoles.data || []}
+                busy={busy}
+                save={mutate}
+                notice={message}
+              />
+            )}
             {["flags", "sounds", "campaigns"].includes(module) && (
               <ConfigPanel
                 key={module}
@@ -487,17 +648,28 @@ export function AdminConsole() {
             )}
             {["users", "clubs"].includes(module) && (
               <>
-                <label className="console-search">
-                  Search by {module === "users" ? "rider name" : "group name"}
-                  <input
-                    value={search}
-                    onChange={(e) => {
-                      setSearch(e.target.value);
-                      setPage(1);
-                    }}
-                    placeholder="Search records…"
-                  />
-                </label>
+                <form
+                  className="console-search-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    setSearch(searchInput);
+                    setPage(1);
+                  }}
+                >
+                  <label className="console-search">
+                    Search by {module === "users" ? "rider name" : "group name"}
+                    <input
+                      value={searchInput}
+                      onChange={(e) => {
+                        setSearchInput(e.target.value);
+                      }}
+                      placeholder="Search records…"
+                    />
+                  </label>
+                  <button className="secondary" type="submit">
+                    Search
+                  </button>
+                </form>
                 <div className="console-table">
                   <table>
                     <thead>
@@ -741,6 +913,13 @@ export function AdminConsole() {
                 {rider.city || "No city"}
               </p>
               <h2>Group memberships</h2>
+              <button
+                className="secondary"
+                disabled={groups.isFetching}
+                onClick={() => groups.refetch()}
+              >
+                Refresh memberships
+              </button>
               {groups.isPending ? (
                 <p>Loading groups?</p>
               ) : groups.isError ? (
@@ -780,6 +959,13 @@ export function AdminConsole() {
               </button>
               <h2>{club.name}</h2>
               <p>Group members (up to 1,000)</p>
+              <button
+                className="secondary"
+                disabled={members.isFetching}
+                onClick={() => members.refetch()}
+              >
+                Refresh members
+              </button>
               {members.isPending ? (
                 <p role="status">Loading members…</p>
               ) : members.isError ? (

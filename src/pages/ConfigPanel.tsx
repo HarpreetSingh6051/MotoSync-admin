@@ -110,30 +110,59 @@ export function ConfigPanel({
               : "campaign"}
         </button>
       </div>
-      <div className="console-plan-grid">
-        {items.map((row) => (
-          <section className="console-card" key={row.key || row.id}>
-            <span className="console-eyebrow">
-              {row.service_status || (row.is_active ? "ACTIVE" : "ARCHIVED")}
-            </span>
-            <h2>{row.name || row.title}</h2>
-            <p>
-              {row.maintenance_message ||
-                row.description ||
-                row.perk_offer ||
-                row.brand ||
-                "No description"}
-            </p>
-            <small>{row.key || row.id}</small>
-            <div className="console-actions">
-              <button className="secondary" onClick={() => edit(row)}>
-                Edit
-              </button>
-            </div>
-          </section>
-        ))}
+      <div className="console-table">
+        <table>
+          <thead>
+            <tr>
+              <th>
+                {resource === "flags"
+                  ? "Feature"
+                  : resource === "sounds"
+                    ? "Sound"
+                    : "Campaign"}
+              </th>
+              <th>Status</th>
+              <th>Details</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((row) => (
+              <tr key={row.key || row.id}>
+                <td>
+                  <strong>{row.name || row.title}</strong>
+                  <small>{row.key || row.id}</small>
+                </td>
+                <td>
+                  <span
+                    className="console-status"
+                    data-status={
+                      row.service_status ||
+                      (row.is_active ? "enabled" : "disabled")
+                    }
+                  >
+                    {row.service_status ||
+                      (row.is_active ? "Active" : "Archived")}
+                  </span>
+                </td>
+                <td className="console-description-cell">
+                  {row.maintenance_message ||
+                    row.description ||
+                    row.perk_offer ||
+                    row.brand ||
+                    "?"}
+                </td>
+                <td>
+                  <button className="secondary" onClick={() => edit(row)}>
+                    Edit
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {!items.length && <p className="console-empty">No records yet.</p>}
       </div>
-      {!items.length && <p>No records yet.</p>}
       {editor && (
         <div className="console-overlay">
           <form
