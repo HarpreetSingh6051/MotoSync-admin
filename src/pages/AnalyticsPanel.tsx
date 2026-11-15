@@ -41,25 +41,28 @@ function Trend({
         role="img"
         aria-label={`${title}. ${rows.reduce((sum, row) => sum + Number(row[field]), 0)} total.`}
       >
-        {y.ticks(4).filter(Number.isInteger).map((tick) => (
-          <g key={tick}>
-            <line
-              className="chart-grid"
-              x1={pad}
-              x2={width - 14}
-              y1={y(tick)}
-              y2={y(tick)}
-            />
-            <text
-              className="chart-label"
-              x={pad - 7}
-              y={y(tick) + 4}
-              textAnchor="end"
-            >
-              {tick}
-            </text>
-          </g>
-        ))}
+        {y
+          .ticks(4)
+          .filter(Number.isInteger)
+          .map((tick) => (
+            <g key={tick}>
+              <line
+                className="chart-grid"
+                x1={pad}
+                x2={width - 14}
+                y1={y(tick)}
+                y2={y(tick)}
+              />
+              <text
+                className="chart-label"
+                x={pad - 7}
+                y={y(tick) + 4}
+                textAnchor="end"
+              >
+                {tick}
+              </text>
+            </g>
+          ))}
         <path d={path} fill="none" className="chart-line" />
         {rows.map((row, i) => (
           <circle
@@ -124,7 +127,7 @@ export function AnalyticsPanel({
   analytics: Row;
   trend?: Row[];
   distribution?: Row[];
-  onCountry?: (country: string,city?:string) => void;
+  onCountry?: (country: string, city?: string) => void;
 }) {
   const [selected, setSelected] = useState("");
   const countries: Row[] = analytics.countries || [];
@@ -171,7 +174,7 @@ export function AnalyticsPanel({
     <div className="analytics-workspace">
       <div className="console-charts">
         <Trend
-          rows={trend.length?trend:analytics.registrations||[]}
+          rows={trend.length ? trend : analytics.registrations || []}
           field="registrations"
           title="Rider registration growth"
         />
@@ -280,23 +283,27 @@ export function AnalyticsPanel({
               {!segments.length && <p>No rides recorded.</p>}
             </div>
           </div>
-          {distribution&&<><h2>Plan distribution</h2>
-          {distribution.length ? (
-            distribution.map((row) => (
-              <div className="console-distribution" key={row.name}>
-                <span>{row.name}</span>
-                <strong>{row.subscribers}</strong>
-                <meter
-                  aria-label={row.name}
-                  min={0}
-                  max={Math.max(1, Number(analytics.totals?.riders))}
-                  value={Number(row.subscribers)}
-                />
-              </div>
-            ))
-          ) : (
-            <p>No plan assignments recorded.</p>
-          )}</>}
+          {distribution && (
+            <>
+              <h2>Plan distribution</h2>
+              {distribution.length ? (
+                distribution.map((row) => (
+                  <div className="console-distribution" key={row.name}>
+                    <span>{row.name}</span>
+                    <strong>{row.subscribers}</strong>
+                    <meter
+                      aria-label={row.name}
+                      min={0}
+                      max={Math.max(1, Number(analytics.totals?.riders))}
+                      value={Number(row.subscribers)}
+                    />
+                  </div>
+                ))
+              ) : (
+                <p>No plan assignments recorded.</p>
+              )}
+            </>
+          )}
         </section>
       </div>
       <section className="console-card">
@@ -346,7 +353,14 @@ export function AnalyticsPanel({
             <tbody>
               {(analytics.cities || []).map((row: Row) => (
                 <tr key={`${row.country}:${row.city}`}>
-                  <td><button className="secondary" onClick={()=>onCountry?.(row.country,row.city)}>{row.city}</button></td>
+                  <td>
+                    <button
+                      className="secondary"
+                      onClick={() => onCountry?.(row.country, row.city)}
+                    >
+                      {row.city}
+                    </button>
+                  </td>
                   <td>{row.country}</td>
                   <td>{row.riders}</td>
                 </tr>

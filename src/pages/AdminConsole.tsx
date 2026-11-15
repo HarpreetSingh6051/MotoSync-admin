@@ -1,6 +1,10 @@
 import { Skeleton } from "@/components/Skeleton";
 import { lazy, Suspense } from "react";
-const AnalyticsPanel=lazy(()=>import("./AnalyticsPanel").then(module=>({default:module.AnalyticsPanel})));
+const AnalyticsPanel = lazy(() =>
+  import("./AnalyticsPanel").then((module) => ({
+    default: module.AnalyticsPanel,
+  })),
+);
 import { OperationComposer } from "./OperationComposer";
 import { ExportReports } from "./ExportReports";
 import { AdminAccountsPanel } from "./AdminAccountsPanel";
@@ -490,7 +494,9 @@ export function AdminConsole() {
               in the navigation.
             </p>
           </section>
-        ) : query.isPending ? (
+        ) : query.isPending ||
+          query.isFetching ||
+          (module === "admin_accounts" && adminRoles.isFetching) ? (
           <Skeleton
             kind={
               module === "dashboard" || module === "analytics"
@@ -498,11 +504,19 @@ export function AdminConsole() {
                 : "table"
             }
           />
-        ) : query.isError ? (
+        ) : query.isError ||
+          (module === "admin_accounts" && adminRoles.isError) ? (
           <section className="console-card" role="alert">
             <h2>Unable to load this module</h2>
-            <p>{query.error.message}</p>
-            <button onClick={() => query.refetch()}>Retry</button>
+            <p>{query.error?.message || adminRoles.error?.message}</p>
+            <button
+              onClick={() => {
+                void query.refetch();
+                if (module === "admin_accounts") void adminRoles.refetch();
+              }}
+            >
+              Retry
+            </button>
           </section>
         ) : (
           <>
@@ -609,31 +623,41 @@ export function AdminConsole() {
                     </section>
                   ))}
                 </div>
-                <Suspense fallback={<Skeleton kind="dashboard"/>}><AnalyticsPanel
-                  analytics={data.analytics || {}}
-                  trend={data.trend}
-                  distribution={data.distribution}
-                  onCountry={(value, selectedCity="") => {
-                    setCountry(value);
-                    setCountryInput(value);
-                    setCity(selectedCity);setCityInput(selectedCity);setSearch("");setSearchInput("");
-                    setModule("users");
-                    setPage(1);
-                  }}
-                /></Suspense>
+                <Suspense fallback={<Skeleton kind="dashboard" />}>
+                  <AnalyticsPanel
+                    analytics={data.analytics || {}}
+                    trend={data.trend}
+                    distribution={data.distribution}
+                    onCountry={(value, selectedCity = "") => {
+                      setCountry(value);
+                      setCountryInput(value);
+                      setCity(selectedCity);
+                      setCityInput(selectedCity);
+                      setSearch("");
+                      setSearchInput("");
+                      setModule("users");
+                      setPage(1);
+                    }}
+                  />
+                </Suspense>
               </>
             )}
             {module === "analytics" && data && (
-              <Suspense fallback={<Skeleton kind="dashboard"/>}><AnalyticsPanel
-                analytics={data}
-                onCountry={(value, selectedCity="") => {
-                  setCountry(value);
-                  setCountryInput(value);
-                  setCity(selectedCity);setCityInput(selectedCity);setSearch("");setSearchInput("");
-                  setModule("users");
-                  setPage(1);
-                }}
-              /></Suspense>
+              <Suspense fallback={<Skeleton kind="dashboard" />}>
+                <AnalyticsPanel
+                  analytics={data}
+                  onCountry={(value, selectedCity = "") => {
+                    setCountry(value);
+                    setCountryInput(value);
+                    setCity(selectedCity);
+                    setCityInput(selectedCity);
+                    setSearch("");
+                    setSearchInput("");
+                    setModule("users");
+                    setPage(1);
+                  }}
+                />
+              </Suspense>
             )}
             {module === "exports" && <ExportReports />}
             {["clubs", "rides", "announcements"].includes(module) && (
