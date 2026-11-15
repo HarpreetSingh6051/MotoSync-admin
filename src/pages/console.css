@@ -415,3 +415,32 @@
     transition: none !important;
   }
 }
+
+:root[data-admin-theme="day"] {
+  color-scheme: light;
+  --admin-bg: #f2f4ef;
+  --admin-panel: #ffffff;
+  --admin-ink: #142a32;
+  --admin-muted: #50676e;
+  --admin-line: #cbd8d8;
+  --admin-lime: #c6ea63;
+  --admin-cyan: #176875;
+  --admin-coral: #9b442d;
+}
+:root[data-admin-theme="night"] {
+  color-scheme: dark;
+}
+.console-shell aside {
+  overflow-y: auto;
+}
+.console-theme {
+  margin: 0 !important;
+  min-width: 110px;
+}
+.console-dialog input[type="checkbox"] {
+  width: auto;
+  justify-self: start;
+}
+.console-actions {
+  margin-top: 16px;
+}

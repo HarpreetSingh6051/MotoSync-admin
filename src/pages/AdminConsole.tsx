@@ -1,4 +1,6 @@
-﻿import { useEffect, useState, type FormEvent } from "react";
+import { ConfigPanel } from "./ConfigPanel";
+import { environment } from "@/lib/environment";
+import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -19,6 +21,12 @@ const modules = [
   { id: "users", name: "Riders", icon: Users },
   { id: "clubs", name: "Groups & members", icon: Shield },
   { id: "plans", name: "Plans & features", icon: Layers },
+  { id: "rides", name: "Rides", icon: Layers },
+  { id: "flags", name: "Feature controls", icon: Shield },
+  { id: "sounds", name: "Sound library", icon: Layers },
+  { id: "campaigns", name: "Campaigns", icon: Layers },
+  { id: "reports", name: "Subscriptions", icon: ScrollText },
+  { id: "settings", name: "Settings", icon: Shield },
   { id: "audit", name: "Audit history", icon: ScrollText },
 ];
 const blankPlan = () => ({
@@ -48,6 +56,20 @@ export function AdminConsole() {
   const [rider, setRider] = useState<Row | null>(null);
   const [club, setClub] = useState<Row | null>(null),
     [plan, setPlan] = useState<ReturnType<typeof blankPlan> | null>(null);
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("motosync-admin-theme") || "system",
+  );
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => {
+      document.documentElement.dataset.adminTheme =
+        theme === "system" ? (media.matches ? "night" : "day") : theme;
+    };
+    apply();
+    localStorage.setItem("motosync-admin-theme", theme);
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, [theme]);
   const cache = useQueryClient();
   useEffect(() => {
     if (!supabase) {
@@ -96,10 +118,15 @@ export function AdminConsole() {
       previous?.focus();
     };
   }, [!!club, !!plan, !!rider]);
-  const endpoint =
-    module === "plans"
-      ? "/plans/admin"
-      : `/admin/${module}${["users", "clubs"].includes(module) ? `?page=${page}&search=${encodeURIComponent(search)}` : ""}`;
+  const endpoint = ["flags", "sounds", "campaigns"].includes(module)
+    ? "/admin/config/" + module
+    : module === "reports"
+      ? "/reports/purchases"
+      : module === "settings"
+        ? "/health"
+        : module === "plans"
+          ? "/plans/admin"
+          : `/admin/${module}${["users", "clubs", "rides"].includes(module) ? `?page=${page}&search=${encodeURIComponent(search)}` : ""}`;
   const query = useQuery({
     queryKey: ["console", endpoint],
     queryFn: () => adminRequest(endpoint),
@@ -130,7 +157,9 @@ export function AdminConsole() {
     setMessage("");
     try {
       if (!supabase)
-        throw Error("Configure VITE_API_BASE_URL, VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY first");
+        throw Error(
+          "Configure VITE_API_BASE_URL, VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY first",
+        );
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -200,7 +229,8 @@ export function AdminConsole() {
           </button>
           {!supabase && (
             <p role="alert">
-              Configure VITE_API_BASE_URL, VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.
+              Configure VITE_API_BASE_URL, VITE_SUPABASE_URL and
+              VITE_SUPABASE_ANON_KEY.
             </p>
           )}
           {message && <p role="alert">{message}</p>}
@@ -265,6 +295,18 @@ export function AdminConsole() {
       </aside>
       <main>
         <header>
+          <label className="console-theme">
+            Appearance
+            <select
+              aria-label="Theme"
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+            >
+              <option value="day">Day</option>
+              <option value="night">Night</option>
+              <option value="system">System</option>
+            </select>
+          </label>
           <div>
             <span className="console-eyebrow">MOTOSYNC / ADMINISTRATION</span>
             <h1>{modules.find((item) => item.id === module)?.name}</h1>
@@ -297,6 +339,76 @@ export function AdminConsole() {
           </section>
         ) : (
           <>
+            {["flags", "sounds", "campaigns"].includes(module) && (
+              <ConfigPanel
+                key={module}
+                resource={module}
+                items={items}
+                busy={busy}
+                save={mutate}
+              />
+            )}
+            {module === "settings" && (
+              <section className="console-card">
+                <h2>Environment & appearance</h2>
+                <p>API: {environment.apiBase}</p>
+                <p>
+                  Service availability is managed in Feature controls. All plans
+                  remain free during launch.
+                </p>
+              </section>
+            )}
+            {["rides", "reports"].includes(module) && (
+              <div className="console-table">
+                <table>
+                  <thead>
+                    <tr>
+                      {(module === "rides"
+                        ? ["Ride", "Status", "Start time"]
+                        : ["Subscription", "Rider", "Status"]
+                      ).map((h) => (
+                        <th key={h}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((row) => (
+                      <tr key={row.id}>
+                        <td>{row.title || row.id}</td>
+                        <td>{module === "rides" ? row.status : row.user_id}</td>
+                        <td>
+                          {module === "rides"
+                            ? new Date(row.start_time).toLocaleString()
+                            : row.status}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {!items.length && (
+                  <p className="console-empty">No records yet.</p>
+                )}
+                {module === "rides" && (
+                  <div className="console-pagination">
+                    <button
+                      disabled={page === 1}
+                      onClick={() => setPage(page - 1)}
+                    >
+                      Previous
+                    </button>
+                    <span>
+                      Page {page} / {data.total} records
+                    </span>
+                    <button
+                      disabled={page * 25 >= data.total}
+                      onClick={() => setPage(page + 1)}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             {module === "dashboard" && data && (
               <>
                 <div className="console-stats">
